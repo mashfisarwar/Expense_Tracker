@@ -4,9 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinPulse Pro - Personal Finance Manager</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FinPulse Pro">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -134,9 +142,7 @@
                     <i class="fa-solid fa-plus mr-2"></i> Add Account
                 </button>
             </div>
-            <div id="accountsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Dynamically Populated -->
-            </div>
+            <div id="accountsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
         <!-- TAB CONTENT: INVESTMENTS (FDR / DPS) -->
@@ -147,9 +153,7 @@
                     <i class="fa-solid fa-plus mr-2"></i> Add Investment
                 </button>
             </div>
-            <div id="investmentsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Dynamically Populated -->
-            </div>
+            <div id="investmentsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
         <!-- TAB CONTENT: LOANS / EMI -->
@@ -160,9 +164,7 @@
                     <i class="fa-solid fa-plus mr-2"></i> Add Loan
                 </button>
             </div>
-            <div id="loansList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Dynamically Populated -->
-            </div>
+            <div id="loansList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
         <!-- TAB CONTENT: TRANSACTIONS -->
@@ -186,9 +188,7 @@
                                 <th class="p-4 text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="transactionsTableBody" class="divide-y divide-slate-800 text-sm">
-                            <!-- Dynamically Populated -->
-                        </tbody>
+                        <tbody id="transactionsTableBody" class="divide-y divide-slate-800 text-sm"></tbody>
                     </table>
                 </div>
             </div>
@@ -401,31 +401,11 @@
                 <h3 class="text-lg font-bold text-white">Firebase Cloud Sync Configuration</h3>
                 <button onclick="closeModal('configModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <p class="text-xs text-slate-400 mb-4">Paste your Firebase project credentials below to enable real-time cloud synchronization across your devices.</p>
+            <p class="text-xs text-slate-400 mb-4">Paste your Firebase project credentials JSON below or configure individually to enable real-time cloud sync.</p>
             <form onsubmit="handleSaveConfig(event)" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">API Key</label>
-                    <input type="text" id="fbApiKey" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Auth Domain</label>
-                    <input type="text" id="fbAuthDomain" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Project ID</label>
-                    <input type="text" id="fbProjectId" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Storage Bucket</label>
-                    <input type="text" id="fbStorageBucket" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Messaging Sender ID</label>
-                    <input type="text" id="fbMessagingSenderId" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">App ID</label>
-                    <input type="text" id="fbAppId" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Firebase Config JSON</label>
+                    <textarea id="fbJsonInput" rows="6" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", ...}' class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white font-mono"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" onclick="closeModal('configModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs font-medium">Cancel</button>
@@ -444,8 +424,43 @@
         <button onclick="switchTab('transactions')" class="flex flex-col items-center text-slate-400 hover:text-white text-xs"><i class="fa-solid fa-list-ul text-lg mb-1"></i>History</button>
     </div>
 
-    <!-- CORE JAVASCRIPT APPLICATION LOGIC -->
+    <!-- CORE JAVASCRIPT APPLICATION LOGIC & PWA REGISTRATION -->
     <script>
+        // Inject PWA Manifest Dynamically
+        const manifestData = {
+            name: "FinPulse Pro Wealth Manager",
+            short_name: "FinPulse",
+            start_url: "./index.html",
+            display: "standalone",
+            background_color: "#0f172a",
+            theme_color: "#4f46e5",
+            icons: [
+                {
+                    src: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+                    sizes: "512x512",
+                    type: "image/png"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestURL;
+        document.head.appendChild(manifestLink);
+
+        // Register Service Worker for offline caching
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
+                self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+            `;
+            const swBlob = new Blob([swCode], { type: 'text/javascript' });
+            const swURL = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swURL).catch(err => console.log('SW registration error:', err));
+        }
+
         // Application State
         let dbState = {
             pin: localStorage.getItem('finpulse_pin') || null,
@@ -518,7 +533,6 @@
                 const app = initializeApp(firebaseConfig);
                 dbFirestore = getFirestore(app);
                 
-                // Fetch cloud data
                 const docRef = doc(dbFirestore, "artifacts", "finpulse_master", "public_data", "finance_state");
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
@@ -671,17 +685,11 @@
                 const fromAcc = dbState.accounts.find(a => a.id === fromId);
                 const toAcc = dbState.accounts.find(a => a.id === toId);
 
-                if (fromAcc.type === 'Credit Card') {
-                    fromAcc.outstanding += amount; // Cash advance or debit on card
-                } else {
-                    fromAcc.balance -= amount;
-                }
+                if (fromAcc.type === 'Credit Card') fromAcc.outstanding += amount;
+                else fromAcc.balance -= amount;
 
-                if (toAcc.type === 'Credit Card') {
-                    toAcc.outstanding -= amount; // Credit card bill payment
-                } else {
-                    toAcc.balance += amount;
-                }
+                if (toAcc.type === 'Credit Card') toAcc.outstanding -= amount;
+                else toAcc.balance += amount;
 
                 dbState.transactions.push({
                     id: Date.now().toString(),
@@ -697,17 +705,11 @@
                 const acc = dbState.accounts.find(a => a.id === accId);
 
                 if (type === 'Expense') {
-                    if (acc.type === 'Credit Card') {
-                        acc.outstanding += amount;
-                    } else {
-                        acc.balance -= amount;
-                    }
-                } else { // Income
-                    if (acc.type === 'Credit Card') {
-                        acc.outstanding -= amount;
-                    } else {
-                        acc.balance += amount;
-                    }
+                    if (acc.type === 'Credit Card') acc.outstanding += amount;
+                    else acc.balance -= amount;
+                } else {
+                    if (acc.type === 'Credit Card') acc.outstanding -= amount;
+                    else acc.balance += amount;
                 }
 
                 dbState.transactions.push({
@@ -864,36 +866,27 @@
                 }
             });
 
-            if (updated) {
-                syncToCloud();
-            }
+            if (updated) syncToCloud();
         }
 
-        // Firebase Config Modal Save
+        // Firebase Config Save
         function handleSaveConfig(e) {
             e.preventDefault();
-            firebaseConfig = {
-                apiKey: document.getElementById('fbApiKey').value.trim(),
-                authDomain: document.getElementById('fbAuthDomain').value.trim(),
-                projectId: document.getElementById('fbProjectId').value.trim(),
-                storageBucket: document.getElementById('fbStorageBucket').value.trim(),
-                messagingSenderId: document.getElementById('fbMessagingSenderId').value.trim(),
-                appId: document.getElementById('fbAppId').value.trim()
-            };
-            localStorage.setItem('finpulse_fb_config', JSON.stringify(firebaseConfig));
-            closeModal('configModal');
-            initFirebase();
-            alert("Firebase configuration saved and connecting...");
+            try {
+                const rawJson = document.getElementById('fbJsonInput').value.trim();
+                firebaseConfig = JSON.parse(rawJson);
+                localStorage.setItem('finpulse_fb_config', JSON.stringify(firebaseConfig));
+                closeModal('configModal');
+                initFirebase();
+                alert("Firebase configuration connected successfully!");
+            } catch (err) {
+                alert("Invalid JSON format. Please paste the exact configuration JSON object.");
+            }
         }
 
         function openConfigModal() {
             if (firebaseConfig) {
-                document.getElementById('fbApiKey').value = firebaseConfig.apiKey || '';
-                document.getElementById('fbAuthDomain').value = firebaseConfig.authDomain || '';
-                document.getElementById('fbProjectId').value = firebaseConfig.projectId || '';
-                document.getElementById('fbStorageBucket').value = firebaseConfig.storageBucket || '';
-                document.getElementById('fbMessagingSenderId').value = firebaseConfig.messagingSenderId || '';
-                document.getElementById('fbAppId').value = firebaseConfig.appId || '';
+                document.getElementById('fbJsonInput').value = JSON.stringify(firebaseConfig, null, 2);
             }
             openModal('configModal');
         }
@@ -908,11 +901,7 @@
         }
 
         function renderDashboard() {
-            let totalLiquid = 0;
-            let totalCreditLimit = 0;
-            let totalCreditOutstanding = 0;
-            let totalInvestments = 0;
-            let totalLoans = 0;
+            let totalLiquid = 0, totalCreditLimit = 0, totalCreditOutstanding = 0, totalInvestments = 0, totalLoans = 0;
 
             dbState.accounts.forEach(acc => {
                 if (acc.type === 'Credit Card') {
@@ -923,13 +912,8 @@
                 }
             });
 
-            dbState.investments.forEach(inv => {
-                if (inv.status === 'Active') totalInvestments += inv.amount;
-            });
-
-            dbState.loans.forEach(loan => {
-                totalLoans += loan.remainingBalance;
-            });
+            dbState.investments.forEach(inv => { if (inv.status === 'Active') totalInvestments += inv.amount; });
+            dbState.loans.forEach(loan => { totalLoans += loan.remainingBalance; });
 
             const netWorth = totalLiquid + totalInvestments - totalCreditOutstanding - totalLoans;
 
@@ -945,7 +929,6 @@
         function renderAccounts() {
             const grid = document.getElementById('accountsGrid');
             grid.innerHTML = '';
-
             if (dbState.accounts.length === 0) {
                 grid.innerHTML = `<p class="text-slate-500 col-span-full text-center py-8">No accounts added yet.</p>`;
                 return;
@@ -954,7 +937,6 @@
             dbState.accounts.forEach(acc => {
                 const card = document.createElement('div');
                 card.className = "bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden";
-                
                 if (acc.type === 'Credit Card') {
                     const limit = acc.creditLimit || 1;
                     const used = acc.outstanding || 0;
@@ -963,10 +945,7 @@
 
                     card.innerHTML = `
                         <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <span class="text-xs uppercase tracking-wider text-rose-400 font-semibold">Credit Card</span>
-                                <h3 class="text-lg font-bold text-white">${acc.name}</h3>
-                            </div>
+                            <div><span class="text-xs uppercase tracking-wider text-rose-400 font-semibold">Credit Card</span><h3 class="text-lg font-bold text-white">${acc.name}</h3></div>
                             <button onclick="deleteAccount('${acc.id}')" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                         <div class="space-y-2 mb-4">
@@ -974,17 +953,12 @@
                             <div class="flex justify-between text-sm"><span class="text-slate-400">Available Limit:</span> <span class="font-bold text-emerald-400">৳${available.toLocaleString()}</span></div>
                             <div class="flex justify-between text-xs text-slate-500"><span>Limit: ৳${limit.toLocaleString()}</span><span>${pct}% used</span></div>
                         </div>
-                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                            <div class="bg-rose-500 h-full rounded-full" style="width: ${pct}%"></div>
-                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden"><div class="bg-rose-500 h-full rounded-full" style="width: ${pct}%"></div></div>
                     `;
                 } else {
                     card.innerHTML = `
                         <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <span class="text-xs uppercase tracking-wider text-cyan-400 font-semibold">${acc.type}</span>
-                                <h3 class="text-lg font-bold text-white">${acc.name}</h3>
-                            </div>
+                            <div><span class="text-xs uppercase tracking-wider text-cyan-400 font-semibold">${acc.type}</span><h3 class="text-lg font-bold text-white">${acc.name}</h3></div>
                             <button onclick="deleteAccount('${acc.id}')" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                         <div class="text-2xl font-bold text-white mb-2">৳${acc.balance.toLocaleString()}</div>
@@ -996,7 +970,7 @@
         }
 
         function deleteAccount(id) {
-            if (confirm("Are you sure you want to delete this account?")) {
+            if (confirm("Delete this account?")) {
                 dbState.accounts = dbState.accounts.filter(a => a.id !== id);
                 syncToCloud();
                 renderAll();
@@ -1006,7 +980,6 @@
         function renderInvestments() {
             const list = document.getElementById('investmentsList');
             list.innerHTML = '';
-
             if (dbState.investments.length === 0) {
                 list.innerHTML = `<p class="text-slate-500 col-span-full text-center py-8">No FDR or DPS schemes recorded.</p>`;
                 return;
@@ -1017,10 +990,7 @@
                 card.className = "bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg";
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <span class="text-xs uppercase tracking-wider text-amber-400 font-semibold">${inv.type} Scheme</span>
-                            <h3 class="text-lg font-bold text-white">${inv.name}</h3>
-                        </div>
+                        <div><span class="text-xs uppercase tracking-wider text-amber-400 font-semibold">${inv.type} Scheme</span><h3 class="text-lg font-bold text-white">${inv.name}</h3></div>
                         <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${inv.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">${inv.status}</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
@@ -1037,7 +1007,6 @@
         function renderLoans() {
             const list = document.getElementById('loansList');
             list.innerHTML = '';
-
             if (dbState.loans.length === 0) {
                 list.innerHTML = `<p class="text-slate-500 col-span-full text-center py-8">No active loans or EMI schedules.</p>`;
                 return;
@@ -1049,16 +1018,13 @@
                 card.className = "bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg";
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <span class="text-xs uppercase tracking-wider text-rose-400 font-semibold">Loan / EMI</span>
-                            <h3 class="text-lg font-bold text-white">${loan.title}</h3>
-                        </div>
+                        <div><span class="text-xs uppercase tracking-wider text-rose-400 font-semibold">Loan / EMI</span><h3 class="text-lg font-bold text-white">${loan.title}</h3></div>
                         <button onclick="deleteLoan('${loan.id}')" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
                         <div><span class="text-slate-400 text-xs block">Remaining Principal</span> <span class="font-bold text-white">৳${loan.remainingBalance.toLocaleString()}</span></div>
                         <div><span class="text-slate-400 text-xs block">Monthly EMI</span> <span class="font-bold text-amber-400">৳${loan.emi.toLocaleString()}</span></div>
-                        <div class="col-span-2 mt-1"><span class="text-slate-400 text-xs block">Auto-Deduction Date & Source</span> <span class="text-slate-300">Day ${loan.scheduledDay} of every month via ${fundingAcc ? fundingAcc.name : 'Unknown'}</span></div>
+                        <div class="col-span-2 mt-1"><span class="text-slate-400 text-xs block">Auto-Deduction Date & Source</span> <span class="text-slate-300">Day ${loan.scheduledDay} via ${fundingAcc ? fundingAcc.name : 'Unknown'}</span></div>
                     </div>
                 `;
                 list.appendChild(card);
@@ -1066,7 +1032,7 @@
         }
 
         function deleteLoan(id) {
-            if (confirm("Delete this loan record?")) {
+            if (confirm("Delete this loan?")) {
                 dbState.loans = dbState.loans.filter(l => l.id !== id);
                 syncToCloud();
                 renderAll();
@@ -1076,14 +1042,12 @@
         function renderTransactions() {
             const tbody = document.getElementById('transactionsTableBody');
             tbody.innerHTML = '';
-
             if (dbState.transactions.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No transactions recorded yet.</td></tr>`;
                 return;
             }
 
             const sorted = [...dbState.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-
             sorted.forEach(tx => {
                 const acc = dbState.accounts.find(a => a.id === tx.accountId);
                 const tr = document.createElement('tr');
@@ -1105,12 +1069,10 @@
         }
 
         function renderCharts() {
-            // Cash Flow Chart
             const ctxFlow = document.getElementById('cashFlowChart').getContext('2d');
             if (cashFlowChartInstance) cashFlowChartInstance.destroy();
 
-            let incomeTotal = 0;
-            let expenseTotal = 0;
+            let incomeTotal = 0, expenseTotal = 0;
             dbState.transactions.forEach(t => {
                 if (t.type === 'Income') incomeTotal += t.amount;
                 if (t.type === 'Expense') expenseTotal += t.amount;
@@ -1120,16 +1082,10 @@
                 type: 'bar',
                 data: {
                     labels: ['Total Income', 'Total Expenses'],
-                    datasets: [{
-                        label: 'Amount (৳)',
-                        data: [incomeTotal, expenseTotal],
-                        backgroundColor: ['#10b981', '#f43f5e'],
-                        borderRadius: 8
-                    }]
+                    datasets: [{ data: [incomeTotal, expenseTotal], backgroundColor: ['#10b981', '#f43f5e'], borderRadius: 8 }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
                         y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
@@ -1138,15 +1094,12 @@
                 }
             });
 
-            // Expense Category Pie Chart
             const ctxPie = document.getElementById('expensePieChart').getContext('2d');
             if (expensePieChartInstance) expensePieChartInstance.destroy();
 
             const categories = {};
             dbState.transactions.forEach(t => {
-                if (t.type === 'Expense') {
-                    categories[t.category] = (categories[t.category] || 0) + t.amount;
-                }
+                if (t.type === 'Expense') categories[t.category] = (categories[t.category] || 0) + t.amount;
             });
 
             const catLabels = Object.keys(categories);
@@ -1156,14 +1109,10 @@
                 type: 'doughnut',
                 data: {
                     labels: catLabels.length ? catLabels : ['No Expenses'],
-                    datasets: [{
-                        data: catData.length ? catData : [1],
-                        backgroundColor: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6']
-                    }]
+                    datasets: [{ data: catData.length ? catData : [1], backgroundColor: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'] }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 12 } } }
                 }
             });
