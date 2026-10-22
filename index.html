@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Personal Money Management & Finance Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-full flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 px-4 lg:px-8 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
+        <div class="flex items-center space-x-3">
+            <div class="bg-brand-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center">
+                <i data-lucide="wallet-cards" class="w-5 h-5 lg:w-6 lg:h-6"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-base lg:text-lg text-slate-900 tracking-tight flex items-center gap-2">
+                    FinPulse <span class="text-[10px] lg:text-xs px-2 py-0.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-full font-medium">Cloud Pro</span>
+                </h1>
+                <p class="text-[11px] text-slate-500 hidden sm:block">Wealth Management, Credit Cards, FDR/DPS & Loan Schedulers</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 lg:space-x-3">
+            <!-- Firebase Auth Status Button -->
+            <button onclick="app.openSyncModal()" id="syncStatusBtn" class="flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition border border-slate-200">
+                <span id="syncDot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span id="syncText" class="truncate max-w-[90px] sm:max-w-none">Connecting...</span>
+            </button>
+
+            <!-- Quick Action Button -->
+            <button onclick="app.openModal('transactionModal')" class="bg-brand-600 hover:bg-brand-700 text-white p-2 lg:px-4 lg:py-2 rounded-xl font-medium text-sm shadow-sm hover:shadow transition flex items-center space-x-1 lg:space-x-2">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Add Transaction</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        
+        <!-- Sidebar Navigation (Desktop) / Bottom Bar (Mobile) -->
+        <aside class="order-last lg:order-first w-full lg:w-64 bg-white border-t lg:border-t-0 lg:border-r border-slate-200 flex lg:flex-col shrink-0 select-none z-10">
+            <nav class="p-2 lg:p-3 flex lg:flex-col justify-around lg:justify-start lg:space-y-1.5 flex-1 overflow-x-auto lg:overflow-y-auto custom-scrollbar">
+                <button onclick="app.switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex flex-col lg:flex-row items-center lg:space-x-3 p-2 lg:px-3.5 lg:py-3 rounded-xl text-xs lg:text-sm font-medium transition text-brand-700 bg-brand-50">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 shrink-0"></i>
+                    <span class="text-[10px] lg:text-sm mt-1 lg:mt-0">Dashboard</span>
+                </button>
+                <button onclick="app.switchTab('accounts')" id="nav-accounts" class="nav-btn flex flex-col lg:flex-row items-center lg:space-x-3 p-2 lg:px-3.5 lg:py-3 rounded-xl text-xs lg:text-sm font-medium transition text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="landmark" class="w-5 h-5 shrink-0"></i>
+                    <span class="text-[10px] lg:text-sm mt-1 lg:mt-0">Accounts</span>
+                </button>
+                <button onclick="app.switchTab('transactions')" id="nav-transactions" class="nav-btn flex flex-col lg:flex-row items-center lg:space-x-3 p-2 lg:px-3.5 lg:py-3 rounded-xl text-xs lg:text-sm font-medium transition text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="receipt" class="w-5 h-5 shrink-0"></i>
+                    <span class="text-[10px] lg:text-sm mt-1 lg:mt-0">Ledger</span>
+                </button>
+                <button onclick="app.switchTab('investments')" id="nav-investments" class="nav-btn flex flex-col lg:flex-row items-center lg:space-x-3 p-2 lg:px-3.5 lg:py-3 rounded-xl text-xs lg:text-sm font-medium transition text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="piggy-bank" class="w-5 h-5 shrink-0"></i>
+                    <span class="text-[10px] lg:text-sm mt-1 lg:mt-0">FDR/DPS</span>
+                </button>
+                <button onclick="app.switchTab('loans')" id="nav-loans" class="nav-btn flex flex-col lg:flex-row items-center lg:space-x-3 p-2 lg:px-3.5 lg:py-3 rounded-xl text-xs lg:text-sm font-medium transition text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="file-text" class="w-5 h-5 shrink-0"></i>
+                    <span class="text-[10px] lg:text-sm mt-1 lg:mt-0">Loans</span>
+                </button>
+                <button onclick="app.switchTab('analytics')" id="nav-analytics" class="nav-btn flex flex-col lg:flex-row items-center lg:space-x-3 p-2 lg:px-3.5 lg:py-3 rounded-xl text-xs lg:text-sm font-medium transition text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="pie-chart" class="w-5 h-5 shrink-0"></i>
+                    <span class="text-[10px] lg:text-sm mt-1 lg:mt-0">Analytics</span>
+                </button>
+            </nav>
+
+            <div class="p-3 border-t border-slate-100 hidden lg:block">
+                <button onclick="app.exportCSV()" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+                    <i data-lucide="download" class="w-4 h-4 shrink-0"></i>
+                    <span>Export CSV Data</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50 p-3 sm:p-4 lg:p-8 pb-20 lg:pb-8" id="mainContainer">
+            
+            <!-- ==================== DASHBOARD TAB ==================== -->
+            <div id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Top Summary KPI Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
+                    <!-- Net Worth -->
+                    <div class="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Net Worth</span>
+                            <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="trending-up" class="w-4 h-4"></i></div>
+                        </div>
+                        <div class="mt-3 lg:mt-4">
+                            <h2 id="kpiNetWorth" class="text-xl lg:text-2xl font-bold text-slate-900">$0.00</h2>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Total Assets minus Liabilities</p>
+                        </div>
+                    </div>
+                    <!-- Liquid Cash -->
+                    <div class="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Liquid Cash</span>
+                            <div class="p-2 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="wallet" class="w-4 h-4"></i></div>
+                        </div>
+                        <div class="mt-3 lg:mt-4">
+                            <h2 id="kpiLiquid" class="text-xl lg:text-2xl font-bold text-slate-900">$0.00</h2>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Cash, Bank & Wallets</p>
+                        </div>
+                    </div>
+                    <!-- Credit Card Liabilities -->
+                    <div class="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Card Bills</span>
+                            <div class="p-2 bg-rose-50 text-rose-600 rounded-xl"><i data-lucide="credit-card" class="w-4 h-4"></i></div>
+                        </div>
+                        <div class="mt-3 lg:mt-4">
+                            <h2 id="kpiCC" class="text-xl lg:text-2xl font-bold text-rose-600">$0.00</h2>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Outstanding bills due</p>
+                        </div>
+                    </div>
+                    <!-- FDR & DPS Total -->
+                    <div class="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">FDR & DPS</span>
+                            <div class="p-2 bg-purple-50 text-purple-600 rounded-xl"><i data-lucide="vault" class="w-4 h-4"></i></div>
+                        </div>
+                        <div class="mt-3 lg:mt-4">
+                            <h2 id="kpiFdr" class="text-xl lg:text-2xl font-bold text-purple-600">$0.00</h2>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Principal + Accrued Int.</p>
+                        </div>
+                    </div>
+                    <!-- Loans Total -->
+                    <div class="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Loans</span>
+                            <div class="p-2 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="file-badge" class="w-4 h-4"></i></div>
+                        </div>
+                        <div class="mt-3 lg:mt-4">
+                            <h2 id="kpiLoans" class="text-xl lg:text-2xl font-bold text-amber-600">$0.00</h2>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Remaining balance</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Action Bar & Scheduler Notification -->
+                <div id="schedulerAlertBox" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-amber-100 text-amber-700 rounded-xl shrink-0"><i data-lucide="bell-ring" class="w-5 h-5"></i></div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-amber-900">Scheduled EMIs Ready for Execution</h4>
+                            <p class="text-xs text-amber-700" id="schedulerAlertText">You have loan installments scheduled for today.</p>
+                        </div>
+                    </div>
+                    <button onclick="app.executePendingEMIs()" class="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-sm transition">
+                        Run EMI Schedulers Now
+                    </button>
+                </div>
+
+                <!-- Charts & Recent Activity Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Spending Breakdown Chart -->
+                    <div class="bg-white p-5 lg:p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 text-base">Monthly Cashflow & Spending</h3>
+                            <span class="text-xs text-slate-400 font-medium">Current Month</span>
+                        </div>
+                        <div class="relative flex-1 w-full min-h-[250px] lg:min-h-[280px]">
+                            <canvas id="cashflowChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Accounts Summary Card -->
+                    <div class="bg-white p-5 lg:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 text-base">Account Balances</h3>
+                            <button onclick="app.switchTab('accounts')" class="text-xs font-semibold text-brand-600 hover:underline">View All</button>
+                        </div>
+                        <div id="dashboardAccountsList" class="space-y-3 overflow-y-auto max-h-[280px] custom-scrollbar pr-1">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions Table Preview -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-800 text-base">Recent Transactions</h3>
+                        <button onclick="app.switchTab('transactions')" class="text-xs font-semibold text-brand-600 hover:underline">View Ledger</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[500px]">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                    <th class="py-3 px-3">Date</th>
+                                    <th class="py-3 px-3">Title / Category</th>
+                                    <th class="py-3 px-3">Account</th>
+                                    <th class="py-3 px-3">Type</th>
+                                    <th class="py-3 px-3 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboardRecentTxTable" class="divide-y divide-slate-100 text-sm">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== ACCOUNTS TAB ==================== -->
+            <div id="tab-accounts" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Accounts & Credit Cards</h2>
+                        <p class="text-xs text-slate-500">Manage cash, bank accounts, digital wallets, and credit card limits</p>
+                    </div>
+                    <button onclick="app.openModal('accountModal')" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm transition flex items-center justify-center space-x-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Add Account / Card</span>
+                    </button>
+                </div>
+
+                <!-- Accounts Grid -->
+                <div id="accountsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- ==================== TRANSACTIONS TAB ==================== -->
+            <div id="tab-transactions" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Transaction Ledger</h2>
+                        <p class="text-xs text-slate-500">Track income, expenses, transfers, credit card settlements, and fees</p>
+                    </div>
+                    <button onclick="app.openModal('transactionModal')" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm transition flex items-center justify-center space-x-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>New Transaction</span>
+                    </button>
+                </div>
+
+                <!-- Filters Bar -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Search</label>
+                        <input type="text" id="filterSearch" oninput="app.renderTransactions()" placeholder="Search title..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>
+                        <select id="filterType" onchange="app.renderTransactions()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="">All Types</option>
+                            <option value="Income">Income</option>
+                            <option value="Expense">Expense</option>
+                            <option value="Transfer">Transfer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Account</label>
+                        <select id="filterAccount" onchange="app.renderTransactions()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="">All Accounts</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="app.resetFilters()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-medium transition">
+                            Reset Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Transactions Full Table -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[650px]">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                    <th class="py-3 px-4">Date</th>
+                                    <th class="py-3 px-4">Title</th>
+                                    <th class="py-3 px-4">Category</th>
+                                    <th class="py-3 px-4">Account</th>
+                                    <th class="py-3 px-4">Type</th>
+                                    <th class="py-3 px-4 text-right">Amount</th>
+                                    <th class="py-3 px-4 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullTransactionTable" class="divide-y divide-slate-100 text-sm">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== INVESTMENTS TAB ==================== -->
+            <div id="tab-investments" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Fixed Deposit (FDR) & DPS Schemes</h2>
+                        <p class="text-xs text-slate-500">Track principal, interest rates, live accrual, and selective encashment routing</p>
+                    </div>
+                    <button onclick="app.openModal('investmentModal')" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm transition flex items-center justify-center space-x-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Add FDR / DPS Scheme</span>
+                    </button>
+                </div>
+
+                <!-- Investments Grid -->
+                <div id="investmentsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- ==================== LOANS TAB ==================== -->
+            <div id="tab-loans" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Loans & Liabilities Schedulers</h2>
+                        <p class="text-xs text-slate-500">Manage borrowings, lent amounts, and automated monthly EMI deductions</p>
+                    </div>
+                    <button onclick="app.openModal('loanModal')" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm transition flex items-center justify-center space-x-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Add Loan / Liability</span>
+                    </button>
+                </div>
+
+                <!-- Loans Grid -->
+                <div id="loansGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- ==================== ANALYTICS TAB ==================== -->
+            <div id="tab-analytics" class="tab-content hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Financial Analytics</h2>
+                    <p class="text-xs text-slate-500">Visual breakdowns of asset allocation, spending categories, and liability ratios</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Category Expense Pie Chart -->
+                    <div class="bg-white p-5 lg:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                        <h3 class="font-bold text-slate-800 text-base mb-4">Expenses by Category</h3>
+                        <div class="relative flex-1 w-full min-h-[280px] flex items-center justify-center">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Asset Distribution Doughnut -->
+                    <div class="bg-white p-5 lg:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                        <h3 class="font-bold text-slate-800 text-base mb-4">Asset & Account Distribution</h3>
+                        <div class="relative flex-1 w-full min-h-[280px] flex items-center justify-center">
+                            <canvas id="assetChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 lg:p-6 shadow-2xl border border-slate-100 my-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-slate-900">Record New Transaction</h3>
+                <button onclick="app.closeModal('transactionModal')" class="p-2 text-slate-400 hover:text-slate-600 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="transactionForm" onsubmit="app.handleTransactionSubmit(event)" class="space-y-3 lg:space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Transaction Type</label>
+                    <select id="txType" onchange="app.updateTxTypeUI()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium">
+                        <option value="Expense">Expense</option>
+                        <option value="Income">Income</option>
+                        <option value="Transfer">Transfer / Card Payment / Cash Out</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+                        <input type="date" id="txDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Amount ($)</label>
+                        <input type="number" step="0.01" min="0.01" id="txAmount" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Title / Description</label>
+                    <input type="text" id="txTitle" required placeholder="e.g. Grocery shopping, Salary" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div id="sourceAccountGroup">
+                    <label id="sourceLabel" class="block text-xs font-semibold text-slate-600 mb-1">Account</label>
+                    <select id="txAccount" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <!-- Injected via JS -->
+                    </select>
+                </div>
+                <div id="destAccountGroup" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Destination Account / Card</label>
+                    <select id="txDestAccount" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <!-- Injected via JS -->
+                    </select>
+                </div>
+                <div id="feeGroup" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Transfer / Cash Out Fee ($)</label>
+                    <input type="number" step="0.01" min="0" id="txFee" value="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div id="categoryGroup">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+                    <select id="txCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="Food & Dining">Food & Dining</option>
+                        <option value="Housing & Utilities">Housing & Utilities</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Salary & Wages">Salary & Wages</option>
+                        <option value="Investment Returns">Investment Returns</option>
+                        <option value="Bills & Fees">Bills & Fees</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 rounded-xl shadow-md transition text-sm">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Account Modal -->
+    <div id="accountModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 lg:p-6 shadow-2xl border border-slate-100 my-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-slate-900">Add Account or Credit Card</h3>
+                <button onclick="app.closeModal('accountModal')" class="p-2 text-slate-400 hover:text-slate-600 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="accountForm" onsubmit="app.handleAccountSubmit(event)" class="space-y-3 lg:space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Account Name</label>
+                    <input type="text" id="accName" required placeholder="e.g. City Bank, My bKash" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Account Type</label>
+                    <select id="accType" onchange="app.updateAccTypeUI()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium">
+                        <option value="Bank">Bank Account</option>
+                        <option value="Cash">Cash in Hand</option>
+                        <option value="MFS">MFS Wallet (bKash/Nagad/Rocket)</option>
+                        <option value="CreditCard">Credit Card</option>
+                    </select>
+                </div>
+                <div id="initialBalanceGroup">
+                    <label id="accBalanceLabel" class="block text-xs font-semibold text-slate-600 mb-1">Initial Balance ($)</label>
+                    <input type="number" step="0.01" id="accBalance" value="0" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold">
+                </div>
+                <div id="ccLimitGroup" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Credit Limit ($)</label>
+                        <input type="number" step="0.01" id="ccLimit" value="5000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Current Outstanding Bill ($)</label>
+                        <input type="number" step="0.01" id="ccOutstanding" value="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold text-rose-600">
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 rounded-xl shadow-md transition text-sm">Save Account / Card</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FDR / DPS Modal -->
+    <div id="investmentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 lg:p-6 shadow-2xl border border-slate-100 my-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-slate-900">Add FDR or DPS Scheme</h3>
+                <button onclick="app.closeModal('investmentModal')" class="p-2 text-slate-400 hover:text-slate-600 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="investmentForm" onsubmit="app.handleInvestmentSubmit(event)" class="space-y-3 lg:space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Scheme Type</label>
+                        <select id="invType" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium">
+                            <option value="FDR">Fixed Deposit (FDR)</option>
+                            <option value="DPS">DPS (Monthly Deposit)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Scheme Title</label>
+                        <input type="text" id="invTitle" required placeholder="e.g. 1-Year Millionaire FDR" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Principal / Deposit Amount ($)</label>
+                        <input type="number" step="0.01" min="1" id="invAmount" required placeholder="10000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Interest Rate (% p.a.)</label>
+                        <input type="number" step="0.01" min="0" id="invRate" required value="7.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tenure (Months)</label>
+                        <input type="number" min="1" id="invTenure" required value="12" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Start Date</label>
+                        <input type="date" id="invStartDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Funding Account (Source of Principal)</label>
+                    <select id="invSourceAccount" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <!-- Injected via JS -->
+                    </select>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 rounded-xl shadow-md transition text-sm">Create Investment Scheme</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Redeem FDR/DPS Modal -->
+    <div id="redeemModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 lg:p-6 shadow-2xl border border-slate-100 my-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-slate-900">Encash / Redeem Scheme</h3>
+                <button onclick="app.closeModal('redeemModal')" class="p-2 text-slate-400 hover:text-slate-600 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="redeemForm" onsubmit="app.handleRedeemSubmit(event)" class="space-y-4">
+                <input type="hidden" id="redeemInvId">
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                    <p class="text-xs text-slate-500 font-medium">Scheme Summary</p>
+                    <h4 id="redeemSchemeTitle" class="font-bold text-slate-800 text-base">Scheme Name</h4>
+                    <p class="text-sm font-semibold text-brand-600" id="redeemTotalPayout">$0.00 Total Payout</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Credit Total Payout To Account</label>
+                    <select id="redeemDestAccount" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <!-- Injected via JS -->
+                    </select>
+                    <p class="text-xs text-slate-400 mt-1">Principal and earned interest will be credited to this account instantly.</p>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-xl shadow-md transition text-sm">Confirm & Encash Payout</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loan Modal -->
+    <div id="loanModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 lg:p-6 shadow-2xl border border-slate-100 my-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-slate-900">Add Loan / Liability / Receivable</h3>
+                <button onclick="app.closeModal('loanModal')" class="p-2 text-slate-400 hover:text-slate-600 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="loanForm" onsubmit="app.handleLoanSubmit(event)" class="space-y-3 lg:space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Type</label>
+                        <select id="loanType" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium">
+                            <option value="Borrowed">Borrowed (I owe someone / EMI)</option>
+                            <option value="Lent">Lent (Someone owes me)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Title / Person Name</label>
+                        <input type="text" id="loanTitle" required placeholder="e.g. Car Loan, John Doe" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Total Loan Amount ($)</label>
+                        <input type="number" step="0.01" min="1" id="loanAmount" required placeholder="5000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Monthly EMI Amount ($)</label>
+                        <input type="number" step="0.01" min="0" id="loanEmi" required placeholder="250" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Scheduled EMI Day (1 - 31)</label>
+                        <input type="number" min="1" max="31" id="loanDay" required value="5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Funding Account for Auto-EMI</label>
+                        <select id="loanAccount" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <!-- Injected via JS -->
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 rounded-xl shadow-md transition text-sm">Save Loan & EMI Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- GitHub & Firebase Config Modal -->
+    <div id="syncModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 lg:p-6 shadow-2xl border border-slate-100 my-auto space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg text-slate-900">Cloud Sync & GitHub Setup</h3>
+                <button onclick="app.closeModal('syncModal')" class="p-2 text-slate-400 hover:text-slate-600 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-slate-500">To host this app for free on <strong>GitHub Pages</strong> and sync across any device using <strong>Firebase</strong>, add your Firebase Web Config credentials below or configure them in your source code.</p>
+            
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-700">Cloud Status</span>
+                    <span id="modalSyncBadge" class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md text-xs font-medium">Local Mode</span>
+                </div>
+                <p id="modalSyncUser" class="text-xs text-slate-500">User ID: Local Session</p>
+            </div>
+
+            <div class="space-y-3">
+                <label class="block text-xs font-semibold text-slate-700">Paste Firebase Config JSON (Optional for Custom Hosting)</label>
+                <textarea id="firebaseConfigInput" rows="4" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..."}' class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                <button onclick="app.saveCustomFirebaseConfig()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-xl text-xs transition shadow-sm">Connect Custom Firebase</button>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex gap-3">
+                <button onclick="app.exportJSON()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-xl text-xs transition">Export JSON Backup</button>
+                <button onclick="app.importJSONPrompt()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-xl text-xs transition">Restore Backup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Notification Toast -->
+    <div id="toast" class="fixed bottom-16 lg:bottom-6 right-4 lg:right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-sm">
+        <i data-lucide="info" class="w-5 h-5 text-brand-400 shrink-0" id="toastIcon"></i>
+        <span id="toastMessage">Action completed successfully.</span>
+    </div>
+
+    <!-- ==================== APPLICATION SCRIPT ==================== -->
+    <script>
+        // Global App State & Firebase Setup
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'finpulse-pro-cloud-default';
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        class MoneyManager {
+            constructor() {
+                this.state = {
+                    accounts: [
+                        { id: 'acc_1', name: 'Primary Bank', type: 'Bank', balance: 5400 },
+                        { id: 'acc_2', name: 'bKash Wallet', type: 'MFS', balance: 1250 },
+                        { id: 'acc_3', name: 'Cash in Wallet', type: 'Cash', balance: 350 },
+                        { id: 'acc_4', name: 'City Bank Visa', type: 'CreditCard', limit: 3000, outstanding: 450, balance: 0 }
+                    ],
+                    transactions: [
+                        { id: 'tx_1', date: new Date().toISOString().split('T')[0], title: 'Monthly Salary', category: 'Salary & Wages', account: 'Primary Bank', type: 'Income', amount: 4500 },
+                        { id: 'tx_2', date: new Date().toISOString().split('T')[0], title: 'Supermarket Groceries', category: 'Food & Dining', account: 'Primary Bank', type: 'Expense', amount: 180 },
+                        { id: 'tx_3', date: new Date().toISOString().split('T')[0], title: 'Restaurant Dinner', category: 'Food & Dining', account: 'City Bank Visa', type: 'Expense', amount: 95 }
+                    ],
+                    investments: [
+                        { id: 'inv_1', type: 'FDR', title: 'Annual Millionaire FDR', amount: 10000, rate: 8.0, tenure: 12, startDate: '2025-06-01', sourceAccount: 'Primary Bank', status: 'Active' },
+                        { id: 'inv_2', type: 'DPS', title: 'Monthly DPS Scheme', amount: 200, rate: 7.0, tenure: 36, startDate: '2025-01-01', sourceAccount: 'Primary Bank', status: 'Active' }
+                    ],
+                    loans: [
+                        { id: 'loan_1', type: 'Borrowed', title: 'Car Loan Installment', amount: 12000, emi: 450, day: 10, account: 'Primary Bank', remaining: 7500, lastPaidMonth: '' }
+                    ]
+                };
+                this.charts = {};
+            }
+
+            async init() {
+                this.loadFromLocalStorage();
+                this.initFirebase();
+                this.setDefaultDates();
+                this.renderAll();
+                this.checkLoanSchedulers();
+                lucide.createIcons();
+            }
+
+            loadFromLocalStorage() {
+                const saved = localStorage.getItem(`finpulse_state_${appId}`);
+                if (saved) {
+                    try {
+                        this.state = JSON.parse(saved);
+                    } catch (e) {
+                        console.error("Failed to parse local storage", e);
+                    }
+                }
+            }
+
+            saveToLocalStorage() {
+                localStorage.setItem(`finpulse_state_${appId}`, JSON.stringify(this.state));
+                this.renderAll();
+            }
+
+            initFirebase(customConfig = null) {
+                try {
+                    let firebaseConfig = customConfig;
+                    if (!firebaseConfig && typeof __firebase_config !== 'undefined') {
+                        try {
+                            firebaseConfig = JSON.parse(__firebase_config);
+                        } catch (e) {}
+                    }
+                    if (!firebaseConfig) {
+                        const savedCfg = localStorage.getItem(`finpulse_fb_cfg_${appId}`);
+                        if (savedCfg) {
+                            firebaseConfig = JSON.parse(savedCfg);
+                        }
+                    }
+
+                    if (firebaseConfig) {
+                        import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js").then(({ initializeApp }) => {
+                            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js").then(({ getAuth, signInAnonymously, signInWithCustomToken }) => {
+                                import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js").then(({ getFirestore, doc, setDoc, onSnapshot }) => {
+                                    const appInstance = initializeApp(firebaseConfig);
+                                    db = getFirestore(appInstance);
+                                    auth = getAuth(appInstance);
+
+                                    const authFn = typeof __initial_auth_token !== 'undefined' ? 
+                                        signInWithCustomToken(auth, __initial_auth_token) : 
+                                        signInAnonymously(auth);
+
+                                    authFn.then(() => {
+                                        currentUser = auth.currentUser;
+                                        document.getElementById('syncDot').className = 'w-2 h-2 rounded-full bg-emerald-500';
+                                        document.getElementById('syncText').innerText = 'Cloud Synced';
+                                        document.getElementById('modalSyncBadge').className = 'px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md text-xs font-medium';
+                                        document.getElementById('modalSyncBadge').innerText = 'Connected';
+                                        document.getElementById('modalSyncUser').innerText = `User ID: ${currentUser.uid}`;
+
+                                        // Setup Rule-1 compliant scoped document listener
+                                        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'public_data', 'finance_state');
+                                        onSnapshot(docRef, (docSnap) => {
+                                            if (docSnap.exists()) {
+                                                const cloudData = docSnap.data();
+                                                if (cloudData && cloudData.state) {
+                                                    this.state = cloudData.state;
+                                                    this.renderAll();
+                                                }
+                                            }
+                                        }, (err) => {
+                                            console.warn("Firestore sync warning:", err);
+                                        });
+                                    }).catch(err => {
+                                        console.warn("Auth initialization warning:", err);
+                                    });
+                                });
+                            });
+                        });
+                    }
+                } catch (e) {
+                    console.log("Running in offline local mode.");
+                }
+            }
+
+            saveCustomFirebaseConfig() {
+                const val = document.getElementById('firebaseConfigInput').value.trim();
+                try {
+                    const parsed = JSON.parse(val);
+                    localStorage.setItem(`finpulse_fb_cfg_${appId}`, JSON.stringify(parsed));
+                    this.showToast("Firebase configuration saved! Reconnecting...");
+                    this.closeModal('syncModal');
+                    setTimeout(() => window.location.reload(), 1000);
+                } catch (e) {
+                    this.showToast("Invalid JSON config format.", "error");
+                }
+            }
+
+            async syncToCloud() {
+                this.saveToLocalStorage();
+                if (db && currentUser) {
+                    try {
+                        const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                        await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'public_data', 'finance_state'), { state: this.state });
+                    } catch (e) {
+                        console.warn("Cloud sync write restricted.", e);
+                    }
+                }
+            }
+
+            setDefaultDates() {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('txDate').value = today;
+                document.getElementById('invStartDate').value = today;
+            }
+
+            switchTab(tabId) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.nav-btn').forEach(el => {
+                    el.className = "nav-btn flex flex-col lg:flex-row items-center lg:space-x-3 p-2 lg:px-3.5 lg:py-3 rounded-xl text-xs lg:text-sm font-medium transition text-slate-600 hover:bg-slate-100";
+                });
+                document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+                document.getElementById(`nav-${tabId}`).className = "nav-btn flex flex-col lg:flex-row items-center lg:space-x-3 p-2 lg:px-3.5 lg:py-3 rounded-xl text-xs lg:text-sm font-medium transition text-brand-700 bg-brand-50";
+                
+                if (tabId === 'analytics') {
+                    setTimeout(() => this.renderCharts(), 50);
+                }
+            }
+
+            openModal(modalId) {
+                document.getElementById(modalId).classList.remove('hidden');
+                this.populateDropdowns();
+            }
+
+            closeModal(modalId) {
+                document.getElementById(modalId).classList.add('hidden');
+            }
+
+            showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                document.getElementById('toastMessage').innerText = message;
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 3500);
+            }
+
+            populateDropdowns() {
+                const accountOptions = this.state.accounts.map(a => `<option value="${a.name}">${a.name} (${a.type}${a.type === 'CreditCard' ? ' - Limit: $' + a.limit : ''})</option>`).join('');
+                
+                ['txAccount', 'txDestAccount', 'invSourceAccount', 'loanAccount', 'filterAccount'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const currentVal = el.value;
+                        if (id === 'filterAccount') {
+                            el.innerHTML = `<option value="">All Accounts</option>` + accountOptions;
+                        } else {
+                            el.innerHTML = accountOptions;
+                        }
+                        el.value = currentVal;
+                    }
+                });
+                
+                const redeemEl = document.getElementById('redeemDestAccount');
+                if (redeemEl) {
+                    redeemEl.innerHTML = this.state.accounts.filter(a => a.type !== 'CreditCard').map(a => `<option value="${a.name}">${a.name} (${a.type})</option>`).join('');
+                }
+            }
+
+            updateTxTypeUI() {
+                const type = document.getElementById('txType').value;
+                const destGroup = document.getElementById('destAccountGroup');
+                const feeGroup = document.getElementById('feeGroup');
+                const sourceLabel = document.getElementById('sourceLabel');
+                const categoryGroup = document.getElementById('categoryGroup');
+
+                if (type === 'Transfer') {
+                    destGroup.classList.remove('hidden');
+                    feeGroup.classList.remove('hidden');
+                    sourceLabel.innerText = "From Account / Card";
+                    categoryGroup.classList.add('hidden');
+                } else {
+                    destGroup.classList.add('hidden');
+                    feeGroup.classList.add('hidden');
+                    sourceLabel.innerText = "Account";
+                    categoryGroup.classList.remove('hidden');
+                }
+            }
+
+            updateAccTypeUI() {
+                const type = document.getElementById('accType').value;
+                const ccGroup = document.getElementById('ccLimitGroup');
+                const balGroup = document.getElementById('initialBalanceGroup');
+
+                if (type === 'CreditCard') {
+                    ccGroup.classList.remove('hidden');
+                    balGroup.classList.add('hidden');
+                } else {
+                    ccGroup.classList.add('hidden');
+                    balGroup.classList.remove('hidden');
+                }
+            }
+
+            handleTransactionSubmit(e) {
+                e.preventDefault();
+                const type = document.getElementById('txType').value;
+                const date = document.getElementById('txDate').value;
+                const title = document.getElementById('txTitle').value;
+                const amount = parseFloat(document.getElementById('txAmount').value);
+                const accountName = document.getElementById('txAccount').value;
+                const category = document.getElementById('txCategory').value || 'Transfer';
+
+                const sourceAcc = this.state.accounts.find(a => a.name === accountName);
+                if (!sourceAcc) return;
+
+                if (type === 'Income') {
+                    if (sourceAcc.type === 'CreditCard') {
+                        sourceAcc.outstanding = Math.max(0, sourceAcc.outstanding - amount);
+                    } else {
+                        sourceAcc.balance += amount;
+                    }
+                } else if (type === 'Expense') {
+                    if (sourceAcc.type === 'CreditCard') {
+                        sourceAcc.outstanding += amount;
+                    } else {
+                        if (sourceAcc.balance < amount) {
+                            this.showToast("Insufficient funds in account!", "error");
+                            return;
+                        }
+                        sourceAcc.balance -= amount;
+                    }
+                } else if (type === 'Transfer') {
+                    const destName = document.getElementById('txDestAccount').value;
+                    const fee = parseFloat(document.getElementById('txFee').value) || 0;
+                    const destAcc = this.state.accounts.find(a => a.name === destName);
+
+                    if (!destAcc) {
+                        this.showToast("Please select a valid destination account.", "error");
+                        return;
+                    }
+
+                    const totalDeduct = amount + fee;
+                    if (sourceAcc.type === 'CreditCard') {
+                        sourceAcc.outstanding += totalDeduct;
+                    } else {
+                        if (sourceAcc.balance < totalDeduct) {
+                            this.showToast("Insufficient balance for transfer + fee!", "error");
+                            return;
+                        }
+                        sourceAcc.balance -= totalDeduct;
+                    }
+
+                    if (destAcc.type === 'CreditCard') {
+                        destAcc.outstanding = Math.max(0, destAcc.outstanding - amount);
+                    } else {
+                        destAcc.balance += amount;
+                    }
+                }
+
+                const newTx = {
+                    id: 'tx_' + Date.now(),
+                    date,
+                    title,
+                    category,
+                    account: accountName,
+                    type,
+                    amount
+                };
+
+                this.state.transactions.unshift(newTx);
+                this.syncToCloud();
+                this.closeModal('transactionModal');
+                document.getElementById('transactionForm').reset();
+                this.setDefaultDates();
+                this.showToast("Transaction recorded successfully!");
+            }
+
+            deleteTransaction(id) {
+                const tx = this.state.transactions.find(t => t.id === id);
+                if (!tx) return;
+
+                const acc = this.state.accounts.find(a => a.name === tx.account);
+                if (acc) {
+                    if (tx.type === 'Income') acc.balance -= tx.amount;
+                    else if (tx.type === 'Expense') acc.balance += tx.amount;
+                }
+
+                this.state.transactions = this.state.transactions.filter(t => t.id !== id);
+                this.syncToCloud();
+                this.showToast("Transaction deleted.");
+            }
+
+            handleAccountSubmit(e) {
+                e.preventDefault();
+                const name = document.getElementById('accName').value;
+                const type = document.getElementById('accType').value;
+
+                if (this.state.accounts.some(a => a.name.toLowerCase() === name.toLowerCase())) {
+                    this.showToast("An account with this name already exists.", "error");
+                    return;
+                }
+
+                let newAcc = { id: 'acc_' + Date.now(), name, type };
+
+                if (type === 'CreditCard') {
+                    newAcc.limit = parseFloat(document.getElementById('ccLimit').value) || 5000;
+                    newAcc.outstanding = parseFloat(document.getElementById('ccOutstanding').value) || 0;
+                    newAcc.balance = 0;
+                } else {
+                    newAcc.balance = parseFloat(document.getElementById('accBalance').value) || 0;
+                }
+
+                this.state.accounts.push(newAcc);
+                this.syncToCloud();
+                this.closeModal('accountModal');
+                document.getElementById('accountForm').reset();
+                this.updateAccTypeUI();
+                this.showToast("Account / Card added successfully!");
+            }
+
+            deleteAccount(id) {
+                if (this.state.accounts.length <= 1) {
+                    this.showToast("You must keep at least one account.", "error");
+                    return;
+                }
+                this.state.accounts = this.state.accounts.filter(a => a.id !== id);
+                this.syncToCloud();
+                this.showToast("Account removed.");
+            }
+
+            handleInvestmentSubmit(e) {
+                e.preventDefault();
+                const type = document.getElementById('invType').value;
+                const title = document.getElementById('invTitle').value;
+                const amount = parseFloat(document.getElementById('invAmount').value);
+                const rate = parseFloat(document.getElementById('invRate').value);
+                const tenure = parseInt(document.getElementById('invTenure').value);
+                const startDate = document.getElementById('invStartDate').value;
+                const sourceAccount = document.getElementById('invSourceAccount').value;
+
+                const sourceAcc = this.state.accounts.find(a => a.name === sourceAccount);
+                if (!sourceAcc || sourceAcc.balance < amount) {
+                    this.showToast("Insufficient balance in source account for opening this scheme!", "error");
+                    return;
+                }
+
+                sourceAcc.balance -= amount;
+
+                const newInv = {
+                    id: 'inv_' + Date.now(),
+                    type,
+                    title,
+                    amount,
+                    rate,
+                    tenure,
+                    startDate,
+                    sourceAccount,
+                    status: 'Active'
+                };
+
+                this.state.investments.push(newInv);
+                this.syncToCloud();
+                this.closeModal('investmentModal');
+                document.getElementById('investmentForm').reset();
+                this.setDefaultDates();
+                this.showToast("Investment scheme created successfully!");
+            }
+
+            openRedeemModal(id) {
+                const inv = this.state.investments.find(i => i.id === id);
+                if (!inv) return;
+
+                const payout = this.calculateInvestmentPayout(inv);
+                document.getElementById('redeemInvId').value = inv.id;
+                document.getElementById('redeemSchemeTitle').innerText = `${inv.title} (${inv.type})`;
+                document.getElementById('redeemTotalPayout').innerText = `$${payout.toFixed(2)} (Principal: $${inv.amount.toFixed(2)} + Interest: $${(payout - inv.amount).toFixed(2)})`;
+                this.populateDropdowns();
+                this.openModal('redeemModal');
+            }
+
+            calculateInvestmentPayout(inv) {
+                const start = new Date(inv.startDate);
+                const now = new Date();
+                const diffTime = Math.abs(now - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const years = diffDays / 365.25;
+                const interest = inv.amount * (inv.rate / 100) * years;
+                return inv.amount + Math.max(0, interest);
+            }
+
+            handleRedeemSubmit(e) {
+                e.preventDefault();
+                const id = document.getElementById('redeemInvId').value;
+                const destAccName = document.getElementById('redeemDestAccount').value;
+
+                const inv = this.state.investments.find(i => i.id === id);
+                const destAcc = this.state.accounts.find(a => a.name === destAccName);
+
+                if (!inv || !destAcc) return;
+
+                const totalPayout = this.calculateInvestmentPayout(inv);
+                destAcc.balance += totalPayout;
+                inv.status = 'Redeemed';
+                inv.redeemedAccount = destAccName;
+                inv.payoutAmount = totalPayout;
+
+                this.syncToCloud();
+                this.closeModal('redeemModal');
+                this.showToast(`Successfully redeemed $${totalPayout.toFixed(2)} to ${destAccName}!`);
+            }
+
+            handleLoanSubmit(e) {
+                e.preventDefault();
+                const type = document.getElementById('loanType').value;
+                const title = document.getElementById('loanTitle').value;
+                const amount = parseFloat(document.getElementById('loanAmount').value);
+                const emi = parseFloat(document.getElementById('loanEmi').value);
+                const day = parseInt(document.getElementById('loanDay').value);
+                const account = document.getElementById('loanAccount').value;
+
+                const newLoan = {
+                    id: 'loan_' + Date.now(),
+                    type,
+                    title,
+                    amount,
+                    remaining: amount,
+                    emi,
+                    day,
+                    account,
+                    lastPaidMonth: ''
+                };
+
+                this.state.loans.push(newLoan);
+                this.syncToCloud();
+                this.closeModal('loanModal');
+                document.getElementById('loanForm').reset();
+                this.showToast("Loan & EMI schedule saved!");
+            }
+
+            checkLoanSchedulers() {
+                const today = new Date();
+                const currentDay = today.getDate();
+                const currentMonthKey = `${today.getFullYear()}-${today.getMonth() + 1}`;
+
+                let pendingCount = 0;
+                this.state.loans.forEach(loan => {
+                    if (loan.type === 'Borrowed' && loan.remaining > 0 && currentDay >= loan.day && loan.lastPaidMonth !== currentMonthKey) {
+                        pendingCount++;
+                    }
+                });
+
+                const alertBox = document.getElementById('schedulerAlertBox');
+                if (pendingCount > 0) {
+                    alertBox.classList.remove('hidden');
+                    document.getElementById('schedulerAlertText').innerText = `You have ${pendingCount} loan EMI schedule(s) ready for automatic deduction today.`;
+                } else {
+                    alertBox.classList.add('hidden');
+                }
+            }
+
+            executePendingEMIs() {
+                const today = new Date();
+                const currentDay = today.getDate();
+                const currentMonthKey = `${today.getFullYear()}-${today.getMonth() + 1}`;
+                const dateStr = today.toISOString().split('T')[0];
+
+                let executed = 0;
+                this.state.loans.forEach(loan => {
+                    if (loan.type === 'Borrowed' && loan.remaining > 0 && currentDay >= loan.day && loan.lastPaidMonth !== currentMonthKey) {
+                        const sourceAcc = this.state.accounts.find(a => a.name === loan.account);
+                        if (sourceAcc && sourceAcc.balance >= loan.emi) {
+                            sourceAcc.balance -= loan.emi;
+                            loan.remaining = Math.max(0, loan.remaining - loan.emi);
+                            loan.lastPaidMonth = currentMonthKey;
+
+                            this.state.transactions.unshift({
+                                id: 'tx_' + Date.now() + Math.random(),
+                                date: dateStr,
+                                title: `Auto-EMI: ${loan.title}`,
+                                category: 'Bills & Fees',
+                                account: loan.account,
+                                type: 'Expense',
+                                amount: loan.emi
+                            });
+                            executed++;
+                        }
+                    }
+                });
+
+                if (executed > 0) {
+                    this.syncToCloud();
+                    this.checkLoanSchedulers();
+                    this.showToast(`Successfully executed ${executed} automated EMI payment(s)!`);
+                } else {
+                    this.showToast("No pending EMIs to execute or insufficient funds.", "error");
+                }
+            }
+
+            renderAll() {
+                this.renderDashboard();
+                this.renderAccounts();
+                this.renderTransactions();
+                this.renderInvestments();
+                this.renderLoans();
+                this.checkLoanSchedulers();
+                lucide.createIcons();
+            }
+
+            renderDashboard() {
+                let totalLiquid = 0;
+                let totalCC = 0;
+                let totalFdr = 0;
+                let totalLoans = 0;
+
+                this.state.accounts.forEach(a => {
+                    if (a.type === 'CreditCard') totalCC += a.outstanding;
+                    else totalLiquid += a.balance;
+                });
+
+                this.state.investments.forEach(i => {
+                    if (i.status === 'Active') totalFdr += this.calculateInvestmentPayout(i);
+                });
+
+                this.state.loans.forEach(l => {
+                    if (l.type === 'Borrowed') totalLoans += l.remaining;
+                });
+
+                const netWorth = totalLiquid + totalFdr - totalCC - totalLoans;
+
+                document.getElementById('kpiNetWorth').innerText = `$${netWorth.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('kpiLiquid').innerText = `$${totalLiquid.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('kpiCC').innerText = `$${totalCC.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('kpiFdr').innerText = `$${totalFdr.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('kpiLoans').innerText = `$${totalLoans.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+                const accListEl = document.getElementById('dashboardAccountsList');
+                accListEl.innerHTML = this.state.accounts.map(a => {
+                    const isCC = a.type === 'CreditCard';
+                    const val = isCC ? a.outstanding : a.balance;
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2 ${isCC ? 'bg-rose-100 text-rose-600' : 'bg-brand-100 text-brand-600'} rounded-lg">
+                                    <i data-lucide="${isCC ? 'credit-card' : 'landmark'}" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">${a.name}</h4>
+                                    <p class="text-[10px] text-slate-400">${a.type}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold ${isCC ? 'text-rose-600' : 'text-slate-900'}">
+                                ${isCC ? 'Due: $' : '$'}${val.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+
+                const recentTable = document.getElementById('dashboardRecentTxTable');
+                const recentTxs = this.state.transactions.slice(0, 5);
+                if (recentTxs.length === 0) {
+                    recentTable.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No transactions recorded yet.</td></tr>`;
+                } else {
+                    recentTable.innerHTML = recentTxs.map(t => `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-3 px-3 text-xs text-slate-500">${t.date}</td>
+                            <td class="py-3 px-3 font-medium text-slate-900">${t.title}<br><span class="text-[10px] text-slate-400">${t.category}</span></td>
+                            <td class="py-3 px-3 text-xs text-slate-600">${t.account}</td>
+                            <td class="py-3 px-3"><span class="px-2 py-0.5 text-[10px] font-semibold rounded-full ${t.type === 'Income' ? 'bg-emerald-50 text-emerald-700' : t.type === 'Expense' ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700'}">${t.type}</span></td>
+                            <td class="py-3 px-3 text-right font-bold ${t.type === 'Income' ? 'text-emerald-600' : 'text-slate-900'}">${t.type === 'Income' ? '+' : '-'}$${t.amount.toFixed(2)}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                this.renderCashflowChart();
+            }
+
+            renderAccounts() {
+                const grid = document.getElementById('accountsGrid');
+                grid.innerHTML = this.state.accounts.map(a => {
+                    const isCC = a.type === 'CreditCard';
+                    let ccWidget = '';
+                    if (isCC) {
+                        const available = a.limit - a.outstanding;
+                        const util = (a.outstanding / a.limit) * 100;
+                        const badgeColor = util > 80 ? 'bg-rose-100 text-rose-700 border-rose-200' : util > 50 ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                        ccWidget = `
+                            <div class="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-400">Credit Limit:</span>
+                                    <span class="font-bold text-slate-800">$${a.limit.toLocaleString()}</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-400">Available Limit:</span>
+                                    <span class="font-bold text-emerald-600">$${available.toLocaleString()}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs pt-1">
+                                    <span class="text-slate-400">Utilization:</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${badgeColor}">${util.toFixed(1)}%</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div class="bg-white p-5 lg:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="p-2.5 ${isCC ? 'bg-rose-50 text-rose-600' : 'bg-brand-50 text-brand-600'} rounded-xl">
+                                        <i data-lucide="${isCC ? 'credit-card' : a.type === 'MFS' ? 'smartphone' : 'landmark'}" class="w-5 h-5"></i>
+                                    </div>
+                                    <button onclick="app.deleteAccount('${a.id}')" class="text-slate-300 hover:text-rose-600 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                                <h3 class="font-bold text-slate-900 text-base">${a.name}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">${a.type} Account</p>
+                            </div>
+                            <div class="mt-6">
+                                <span class="text-xs text-slate-400 block">${isCC ? 'Current Outstanding Bill' : 'Available Balance'}</span>
+                                <h4 class="text-2xl font-bold ${isCC ? 'text-rose-600' : 'text-slate-900'} mt-1">
+                                    $${isCC ? a.outstanding.toLocaleString('en-US', {minimumFractionDigits: 2}) : a.balance.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                                </h4>
+                                ${ccWidget}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            renderTransactions() {
+                const search = document.getElementById('filterSearch').value.toLowerCase();
+                const type = document.getElementById('filterType').value;
+                const account = document.getElementById('filterAccount').value;
+
+                let filtered = this.state.transactions.filter(t => {
+                    const matchSearch = t.title.toLowerCase().includes(search) || t.category.toLowerCase().includes(search);
+                    const matchType = type ? t.type === type : true;
+                    const matchAccount = account ? t.account === account : true;
+                    return matchSearch && matchType && matchAccount;
+                });
+
+                const tbody = document.getElementById('fullTransactionTable');
+                if (filtered.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-sm">No matching transactions found.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = filtered.map(t => `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 text-xs text-slate-500">${t.date}</td>
+                        <td class="py-3 px-4 font-medium text-slate-900">${t.title}</td>
+                        <td class="py-3 px-4 text-xs text-slate-600"><span class="px-2.5 py-1 bg-slate-100 rounded-lg">${t.category}</span></td>
+                        <td class="py-3 px-4 text-xs text-slate-600">${t.account}</td>
+                        <td class="py-3 px-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${t.type === 'Income' ? 'bg-emerald-50 text-emerald-700' : t.type === 'Expense' ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700'}">${t.type}</span></td>
+                        <td class="py-3 px-4 text-right font-bold ${t.type === 'Income' ? 'text-emerald-600' : 'text-slate-900'}">${t.type === 'Income' ? '+' : '-'}$${t.amount.toFixed(2)}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="app.deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            renderInvestments() {
+                const grid = document.getElementById('investmentsGrid');
+                if (this.state.investments.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">No FDR or DPS schemes added yet.</div>`;
+                    return;
+                }
+
+                grid.innerHTML = this.state.investments.map(i => {
+                    const payout = this.calculateInvestmentPayout(i);
+                    const profit = payout - i.amount;
+                    const isActive = i.status === 'Active';
+
+                    return `
+                        <div class="bg-white p-5 lg:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded-lg ${i.type === 'FDR' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'}">${i.type} Scheme</span>
+                                    <span class="px-2.5 py-1 text-xs font-medium rounded-lg ${isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${i.status}</span>
+                                </div>
+                                <h3 class="font-bold text-slate-900 text-base">${i.title}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Started: ${i.startDate} (${i.tenure} months @ ${i.rate}% p.a.)</p>
+                            </div>
+                            <div class="mt-6 space-y-3">
+                                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-slate-400">Principal Deposit:</span>
+                                        <span class="font-bold text-slate-800">$${i.amount.toLocaleString()}</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-slate-400">Accrued Profit:</span>
+                                        <span class="font-bold text-emerald-600">+$${profit.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs pt-1 border-t border-slate-200">
+                                        <span class="font-semibold text-slate-600">Total Payout:</span>
+                                        <span class="font-bold text-purple-600">$${payout.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                                    </div>
+                                </div>
+                                ${isActive ? `
+                                    <button onclick="app.openRedeemModal('${i.id}')" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 rounded-xl text-xs transition shadow-sm">
+                                        Redeem / Encash Payout
+                                    </button>
+                                ` : `
+                                    <div class="text-center text-xs text-slate-400 py-1 font-medium">Credited to ${i.redeemedAccount}</div>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            renderLoans() {
+                const grid = document.getElementById('loansGrid');
+                if (this.state.loans.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">No loans or liabilities scheduled.</div>`;
+                    return;
+                }
+
+                grid.innerHTML = this.state.loans.map(l => {
+                    const isBorrowed = l.type === 'Borrowed';
+                    return `
+                        <div class="bg-white p-5 lg:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded-lg ${isBorrowed ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}">${l.type}</span>
+                                    <span class="text-xs font-medium text-slate-400">EMI Day: ${l.day}th</span>
+                                </div>
+                                <h3 class="font-bold text-slate-900 text-base">${l.title}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Funding Account: ${l.account}</p>
+                            </div>
+                            <div class="mt-6 space-y-3">
+                                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-slate-400">Total Amount:</span>
+                                        <span class="font-bold text-slate-800">$${l.amount.toLocaleString()}</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-slate-400">Remaining Balance:</span>
+                                        <span class="font-bold text-amber-600">$${l.remaining.toLocaleString()}</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs pt-1 border-t border-slate-200">
+                                        <span class="font-semibold text-slate-600">Monthly EMI:</span>
+                                        <span class="font-bold text-slate-900">$${l.emi.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            renderCharts() {
+                const catData = {};
+                this.state.transactions.filter(t => t.type === 'Expense').forEach(t => {
+                    catData[t.category] = (catData[t.category] || 0) + t.amount;
+                });
+
+                const catCtx = document.getElementById('categoryChart').getContext('2d');
+                if (this.charts.category) this.charts.category.destroy();
+                this.charts.category = new Chart(catCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(catData),
+                        datasets: [{
+                            data: Object.values(catData),
+                            backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+
+                const assetCtx = document.getElementById('assetChart').getContext('2d');
+                if (this.charts.asset) this.charts.asset.destroy();
+                this.charts.asset = new Chart(assetCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: this.state.accounts.map(a => a.name),
+                        datasets: [{
+                            data: this.state.accounts.map(a => a.type === 'CreditCard' ? a.outstanding : a.balance),
+                            backgroundColor: ['#16a34a', '#2563eb', '#d97706', '#dc2626', '#9333ea']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            renderCashflowChart() {
+                const ctx = document.getElementById('cashflowChart').getContext('2d');
+                if (this.charts.cashflow) this.charts.cashflow.destroy();
+
+                const incomes = this.state.transactions.filter(t => t.type === 'Income').reduce((s, t) => s + t.amount, 0);
+                const expenses = this.state.transactions.filter(t => t.type === 'Expense').reduce((s, t) => s + t.amount, 0);
+
+                this.charts.cashflow = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Total Income', 'Total Expenses', 'Net Savings'],
+                        datasets: [{
+                            label: 'Amount ($)',
+                            data: [incomes, expenses, incomes - expenses],
+                            backgroundColor: ['#22c55e', '#ef4444', '#3b82f6'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            }
+
+            exportCSV() {
+                let csv = 'ID,Date,Title,Category,Account,Type,Amount\n';
+                this.state.transactions.forEach(t => {
+                    csv += `"${t.id}","${t.date}","${t.title}","${t.category}","${t.account}","${t.type}",${t.amount}\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `finpulse_transactions_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                this.showToast("CSV Exported successfully!");
+            }
+
+            exportJSON() {
+                const json = JSON.stringify(this.state, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `finpulse_backup_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                this.showToast("JSON Backup exported successfully!");
+            }
+
+            importJSONPrompt() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = event => {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            if (data && data.accounts && data.transactions) {
+                                this.state = data;
+                                this.syncToCloud();
+                                this.showToast("Backup restored successfully!");
+                            } else {
+                                this.showToast("Invalid backup file format.", "error");
+                            }
+                        } catch (err) {
+                            this.showToast("Failed to parse JSON backup file.", "error");
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+
+            openSyncModal() {
+                this.openModal('syncModal');
+            }
+        }
+
+        const app = new MoneyManager();
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
