@@ -97,7 +97,6 @@
 
         <!-- TAB CONTENT: DASHBOARD -->
         <div id="tab-dashboard" class="space-y-6">
-            <!-- KPI CARDS -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg">
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Net Worth</p>
@@ -121,7 +120,6 @@
                 </div>
             </div>
 
-            <!-- CHARTS SECTION -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg lg:col-span-2">
                     <h3 class="text-lg font-semibold mb-4 text-white">Monthly Cash Flow</h3>
@@ -206,7 +204,7 @@
             </div>
             <form onsubmit="handleSaveAccount(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Account Name</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Account Name (e.g. bKash, Prime Bank, City Bank)</label>
                     <input type="text" id="accName" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-primary">
                 </div>
                 <div>
@@ -217,6 +215,10 @@
                         <option value="MFS">MFS (bKash/Nagad/Rocket)</option>
                         <option value="Credit Card">Credit Card</option>
                     </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Custom Logo / Icon Class (Optional, e.g. fa-building-columns or website domain for auto-fetch)</label>
+                    <input type="text" id="accLogo" placeholder="e.g. bkash.com, citybank.com or leave blank for auto" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-primary text-xs">
                 </div>
                 <div id="standardBalanceDiv">
                     <label class="block text-xs font-semibold text-slate-400 mb-1">Initial Balance (৳)</label>
@@ -465,10 +467,10 @@
         let dbState = {
             pin: localStorage.getItem('finpulse_pin') || null,
             accounts: JSON.parse(localStorage.getItem('finpulse_accounts')) || [
-                { id: '1', name: 'Cash Wallet', type: 'Cash', balance: 5000 },
-                { id: '2', name: 'Prime Bank', type: 'Bank', balance: 45000 },
-                { id: '3', name: 'bKash Personal', type: 'MFS', balance: 3200 },
-                { id: '4', name: 'City Bank Amex', type: 'Credit Card', balance: 0, creditLimit: 100000, outstanding: 12500 }
+                { id: '1', name: 'Cash Wallet', type: 'Cash', balance: 5000, logo: 'fa-wallet' },
+                { id: '2', name: 'Prime Bank', type: 'Bank', balance: 45000, logo: 'primebank.com' },
+                { id: '3', name: 'bKash Personal', type: 'MFS', balance: 3200, logo: 'bkash.com' },
+                { id: '4', name: 'City Bank Amex', type: 'Credit Card', balance: 0, creditLimit: 100000, outstanding: 12500, logo: 'thecitybank.com' }
             ],
             transactions: JSON.parse(localStorage.getItem('finpulse_transactions')) || [],
             investments: JSON.parse(localStorage.getItem('finpulse_investments')) || [],
@@ -574,7 +576,6 @@
             localStorage.setItem('finpulse_loans', JSON.stringify(dbState.loans));
         }
 
-        // Navigation Tabs
         function switchTab(tabId) {
             ['dashboard', 'accounts', 'investments', 'loans', 'transactions'].forEach(t => {
                 document.getElementById(`tab-${t}`).classList.add('hidden');
@@ -591,7 +592,6 @@
             renderAll();
         }
 
-        // Modals Control
         function openModal(modalId) {
             document.getElementById(modalId).classList.remove('hidden');
             if (modalId === 'transactionModal' || modalId === 'redeemModal' || modalId === 'loanModal') {
@@ -644,13 +644,29 @@
             });
         }
 
-        // Account Management
+        // Account Management with Logo Handling
         function handleSaveAccount(e) {
             e.preventDefault();
             const name = document.getElementById('accName').value;
             const type = document.getElementById('accType').value;
+            let logo = document.getElementById('accLogo').value.trim();
+
+            if (!logo) {
+                // Auto-generate logo or website favicon based on account name
+                const cleanName = name.toLowerCase();
+                if (cleanName.includes('bkash')) logo = 'bkash.com';
+                else if (cleanName.includes('nagad')) logo = 'nagad.com.bd';
+                else if (cleanName.includes('rocket')) logo = 'dutchbanglabank.com';
+                else if (cleanName.includes('prime')) logo = 'primebank.com.bd';
+                else if (cleanName.includes('city')) logo = 'thecitybank.com';
+                else if (type === 'Cash') logo = 'fa-wallet';
+                else if (type === 'Bank') logo = 'fa-building-columns';
+                else if (type === 'MFS') logo = 'fa-mobile-screen';
+                else if (type === 'Credit Card') logo = 'fa-credit-card';
+                else logo = 'fa-wallet';
+            }
             
-            let newAcc = { id: Date.now().toString(), name, type, balance: 0 };
+            let newAcc = { id: Date.now().toString(), name, type, logo, balance: 0 };
             if (type === 'Credit Card') {
                 newAcc.creditLimit = parseFloat(document.getElementById('accCreditLimit').value) || 0;
                 newAcc.outstanding = parseFloat(document.getElementById('accOutstanding').value) || 0;
@@ -666,7 +682,6 @@
             renderAll();
         }
 
-        // Transactions Management
         function handleSaveTransaction(e) {
             e.preventDefault();
             const type = document.getElementById('txType').value;
@@ -750,7 +765,6 @@
             renderAll();
         }
 
-        // Investments Management
         function handleSaveInvestment(e) {
             e.preventDefault();
             const name = document.getElementById('invName').value;
@@ -812,7 +826,6 @@
             renderAll();
         }
 
-        // Loan Management & EMI Scheduler
         function handleSaveLoan(e) {
             e.preventDefault();
             const title = document.getElementById('loanTitle').value;
@@ -869,7 +882,6 @@
             if (updated) syncToCloud();
         }
 
-        // Firebase Config Save
         function handleSaveConfig(e) {
             e.preventDefault();
             try {
@@ -891,7 +903,6 @@
             openModal('configModal');
         }
 
-        // Rendering Engine
         function renderAll() {
             renderDashboard();
             renderAccounts();
@@ -937,6 +948,17 @@
             dbState.accounts.forEach(acc => {
                 const card = document.createElement('div');
                 card.className = "bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden";
+                
+                // Helper to render account logo (either FontAwesome icon or fetched web favicon)
+                let logoHtml = '';
+                const logoVal = acc.logo || 'fa-wallet';
+                if (logoVal.startsWith('fa-')) {
+                    logoHtml = `<div class="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center text-lg"><i class="fa-solid ${logoVal}"></i></div>`;
+                } else {
+                    const faviconUrl = `https://www.google.com/s2/favicons?domain=${logoVal}&sz=128`;
+                    logoHtml = `<div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center overflow-hidden p-1.5"><img src="${faviconUrl}" alt="${acc.name}" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<i class=\'fa-solid fa-building-columns text-primary\'></i>'"></div>`;
+                }
+
                 if (acc.type === 'Credit Card') {
                     const limit = acc.creditLimit || 1;
                     const used = acc.outstanding || 0;
@@ -945,7 +967,13 @@
 
                     card.innerHTML = `
                         <div class="flex justify-between items-start mb-3">
-                            <div><span class="text-xs uppercase tracking-wider text-rose-400 font-semibold">Credit Card</span><h3 class="text-lg font-bold text-white">${acc.name}</h3></div>
+                            <div class="flex items-center space-x-3">
+                                ${logoHtml}
+                                <div>
+                                    <span class="text-xs uppercase tracking-wider text-rose-400 font-semibold">Credit Card</span>
+                                    <h3 class="text-lg font-bold text-white">${acc.name}</h3>
+                                </div>
+                            </div>
                             <button onclick="deleteAccount('${acc.id}')" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                         <div class="space-y-2 mb-4">
@@ -958,7 +986,13 @@
                 } else {
                     card.innerHTML = `
                         <div class="flex justify-between items-start mb-3">
-                            <div><span class="text-xs uppercase tracking-wider text-cyan-400 font-semibold">${acc.type}</span><h3 class="text-lg font-bold text-white">${acc.name}</h3></div>
+                            <div class="flex items-center space-x-3">
+                                ${logoHtml}
+                                <div>
+                                    <span class="text-xs uppercase tracking-wider text-cyan-400 font-semibold">${acc.type}</span>
+                                    <h3 class="text-lg font-bold text-white">${acc.name}</h3>
+                                </div>
+                            </div>
                             <button onclick="deleteAccount('${acc.id}')" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                         <div class="text-2xl font-bold text-white mb-2">৳${acc.balance.toLocaleString()}</div>
